@@ -5,7 +5,7 @@ export default function App() {
   const [photoName, setPhotoName] = useState('')
   const [fullName, setFullName] = useState('')
   
-  // Locked Soft Rose & Cream Card Theme for everyone
+  // Locked Soft Rose & Cream Card Theme
   const CARD_THEME = {
     bgGradStart: '#fff1f2',
     bgGradEnd: '#ffe4e6',
@@ -270,7 +270,6 @@ export default function App() {
       canvas.height = CANVAS_SIZE
       const ctx = canvas.getContext('2d')
 
-      // Load active photo image
       const photoImg = new Image()
       photoImg.crossOrigin = 'anonymous'
 
@@ -299,7 +298,7 @@ export default function App() {
       ctx.fillStyle = radialGlow
       ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
-      // 2. Top Left Header (The Eagles Assembly Emblem & Text)
+      // 2. Top Left Header
       drawEagleCrest(ctx, 55, 58, 26)
 
       ctx.textAlign = 'left'
@@ -311,7 +310,7 @@ export default function App() {
       ctx.font = 'bold 13px "Montserrat", system-ui, sans-serif'
       ctx.fillText(CHURCH_LOCATION, 94, 72)
 
-      // 3. Top Right Header (WOMEN CONVENTION 2026)
+      // 3. Top Right Header
       ctx.textAlign = 'right'
       ctx.fillStyle = '#ffd700'
       ctx.font = 'bold 16px "Montserrat", system-ui, sans-serif'
@@ -336,7 +335,7 @@ export default function App() {
       ctx.shadowBlur = 0
       ctx.shadowOffsetY = 0
 
-      // 5. Locked Soft Rose & Cream Frame Card Container
+      // 5. Frame Card Container
       const frameX = 75
       const frameY = 192
       const frameW = 930
@@ -348,7 +347,6 @@ export default function App() {
       ctx.shadowBlur = 26
       ctx.shadowOffsetY = 12
 
-      // Soft Rose & Cream Gradient
       const cardGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH)
       cardGrad.addColorStop(0, CARD_THEME.bgGradStart)
       cardGrad.addColorStop(1, CARD_THEME.bgGradEnd)
@@ -357,7 +355,6 @@ export default function App() {
       drawRoundRect(ctx, frameX, frameY, frameW, frameH, frameRadius)
       ctx.fill()
 
-      // Rose Accent Border
       ctx.strokeStyle = CARD_THEME.borderColor
       ctx.lineWidth = 3
       ctx.stroke()
@@ -388,7 +385,6 @@ export default function App() {
       drawRoundRect(ctx, photoX, photoY, photoBoxW, photoBoxH, 6)
       ctx.stroke()
 
-      // Attendee Name Overlay Banner at bottom of photo
       if (fullName.trim()) {
         const ribbonH = 46
         const ribbonY = photoY + photoBoxH - ribbonH
@@ -523,73 +519,75 @@ export default function App() {
       {/* Hidden Offscreen Canvas for Export */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Navigation Bar */}
+      {/* Responsive Navigation Header */}
       <header className="border-b border-rose-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-xs">
-        <div className="max-w-5xl mx-auto px-4 py-3.5 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-rose-700 to-amber-500 flex items-center justify-center font-bold text-white shadow-md shadow-rose-500/20 text-lg border border-amber-400/40">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center space-x-2.5 sm:space-x-3">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-tr from-rose-700 to-amber-500 flex items-center justify-center font-bold text-white shadow-md shadow-rose-500/20 text-sm sm:text-lg border border-amber-400/40 shrink-0">
               🦅
             </div>
             <div>
-              <span className="font-extrabold text-base sm:text-lg tracking-tight text-rose-950 block leading-tight">
+              <span className="font-extrabold text-sm sm:text-base md:text-lg tracking-tight text-rose-950 block leading-tight truncate max-w-[200px] sm:max-w-none">
                 {CHURCH_NAME}
               </span>
-              <span className="text-xs text-rose-700 font-semibold">{EVENT_TITLE} Frame Generator</span>
+              <span className="text-[10px] sm:text-xs text-rose-700 font-semibold block leading-tight">
+                {EVENT_TITLE}
+              </span>
             </div>
           </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200 hidden sm:inline-block">
+          <span className="text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap">
             {EVENT_DATES}
           </span>
         </div>
       </header>
 
-      {/* Main Workspace */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 md:py-10">
+      {/* Main Responsive Workspace */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-10">
         
         {/* Title Header */}
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <span className="text-xs font-bold uppercase tracking-widest text-rose-800 bg-rose-100 px-3.5 py-1.5 rounded-full border border-rose-200 mb-3 inline-block shadow-2xs">
+        <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-8">
+          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-rose-800 bg-rose-100 px-3 py-1 rounded-full border border-rose-200 mb-2 sm:mb-3 inline-block shadow-2xs">
             {CHURCH_NAME} &bull; {CHURCH_LOCATION}
           </span>
-          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-rose-950 mt-1 mb-2">
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-black tracking-tight text-rose-950 mt-1 mb-2">
             {EVENT_TITLE}
           </h1>
-          <p className="text-slate-600 text-xs sm:text-sm font-medium">
+          <p className="text-slate-600 text-xs sm:text-sm font-medium px-2">
             Upload your picture, enter your name, and download your official 1:1 souvenir photo frame!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           
-          {/* Form Controls */}
-          <div className="lg:col-span-5 bg-white border border-rose-100 rounded-2xl p-6 shadow-xl space-y-6">
+          {/* Responsive Form Controls */}
+          <div className="lg:col-span-5 bg-white border border-rose-100 rounded-2xl p-4 sm:p-6 shadow-xl space-y-5 sm:space-y-6">
             
             <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-              <h2 className="text-base font-extrabold text-rose-950 flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-extrabold text-rose-950 flex items-center gap-2">
                 <span>📷</span> Photo & Name Details
               </h2>
             </div>
 
-            <form onSubmit={generateAndDownloadFrame} className="space-y-6">
+            <form onSubmit={generateAndDownloadFrame} className="space-y-5 sm:space-y-6">
               
               {/* Option 1: Upload Picture */}
               <div>
-                <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5">
                   1. Upload Picture <span className="text-rose-600">*</span>
                 </label>
 
                 {!photoUrl ? (
                   <label 
                     htmlFor="photo-upload-input"
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-rose-300 hover:border-rose-500 bg-rose-50/40 hover:bg-rose-50/80 rounded-xl p-6 cursor-pointer transition group text-center"
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-rose-300 hover:border-rose-500 bg-rose-50/40 hover:bg-rose-50/80 rounded-xl p-5 sm:p-6 cursor-pointer transition group text-center"
                   >
-                    <div className="w-14 h-14 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-3xl mb-3 text-rose-600 group-hover:scale-110 transition">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-2xl sm:text-3xl mb-2 sm:mb-3 text-rose-600 group-hover:scale-110 transition">
                       📸
                     </div>
-                    <span className="text-sm font-bold text-rose-950">
-                      Click to choose picture
+                    <span className="text-xs sm:text-sm font-bold text-rose-950">
+                      Tap to choose picture
                     </span>
-                    <span className="text-xs text-slate-500 mt-1">
+                    <span className="text-[11px] text-slate-500 mt-1">
                       Supports JPG, JPEG, PNG, WebP (Max 25MB)
                     </span>
                     <input 
@@ -602,9 +600,9 @@ export default function App() {
                     />
                   </label>
                 ) : (
-                  <div className="bg-slate-50 border border-rose-200 rounded-xl p-3.5 space-y-3">
+                  <div className="bg-slate-50 border border-rose-200 rounded-xl p-3 sm:p-3.5 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-rose-600 shrink-0 bg-slate-900 shadow-md">
+                      <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 border-rose-600 shrink-0 bg-slate-900 shadow-md">
                         <img 
                           src={photoUrl} 
                           alt="Uploaded picture" 
@@ -649,11 +647,11 @@ export default function App() {
                 )}
               </div>
 
-              {/* Photo Alignment & Fit Mode */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+              {/* Responsive Photo Alignment & Fit Mode */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3.5">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                   <span className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
-                    <span>🎯</span> Photo Alignment & Fit Mode
+                    <span>🎯</span> Alignment & Fit Controls
                   </span>
                   <button
                     type="button"
@@ -678,24 +676,24 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setFitMode('contain')}
-                      className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      className={`py-2 px-2.5 text-[11px] sm:text-xs font-bold rounded-lg border transition ${
                         fitMode === 'contain'
                           ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                           : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                       }`}
                     >
-                      Show Full Image (Auto Fit)
+                      Show Full Image
                     </button>
                     <button
                       type="button"
                       onClick={() => setFitMode('cover')}
-                      className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                      className={`py-2 px-2.5 text-[11px] sm:text-xs font-bold rounded-lg border transition ${
                         fitMode === 'cover'
                           ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
                           : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                       }`}
                     >
-                      Fill Entire Frame (Crop)
+                      Fill Frame
                     </button>
                   </div>
                 </div>
@@ -712,7 +710,7 @@ export default function App() {
                     max="150"
                     value={photoZoom}
                     onChange={(e) => setPhotoZoom(Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
                   />
                 </div>
 
@@ -730,7 +728,7 @@ export default function App() {
                     max="50"
                     value={photoOffsetX}
                     onChange={(e) => setPhotoOffsetX(Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
                   />
                 </div>
 
@@ -748,7 +746,7 @@ export default function App() {
                     max="50"
                     value={photoOffsetY}
                     onChange={(e) => setPhotoOffsetY(Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
                   />
                 </div>
 
@@ -756,7 +754,7 @@ export default function App() {
 
               {/* Option 2: Input Name */}
               <div>
-                <label htmlFor="full-name-input" className="block text-sm font-bold text-slate-900 mb-1.5">
+                <label htmlFor="full-name-input" className="block text-xs sm:text-sm font-bold text-slate-900 mb-1.5">
                   2. Input Your Name
                 </label>
                 <input
@@ -765,14 +763,14 @@ export default function App() {
                   placeholder="e.g. Sister Mercy Akpan"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 focus:bg-white focus:ring-2 focus:ring-rose-600/20 transition font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 sm:px-4 py-2.5 sm:py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 focus:bg-white focus:ring-2 focus:ring-rose-600/20 transition font-medium"
                 />
               </div>
 
               {/* Validation Status Banner */}
               {validationState && (
                 <div 
-                  className={`p-3.5 rounded-xl border text-xs flex items-start gap-2 ${
+                  className={`p-3 sm:p-3.5 rounded-xl border text-xs flex items-start gap-2 ${
                     validationState.type === 'error'
                       ? 'bg-rose-50 border-rose-200 text-rose-800'
                       : 'bg-emerald-50 border-emerald-200 text-emerald-800'
@@ -787,7 +785,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={isGenerating}
-                className="w-full bg-gradient-to-r from-rose-700 via-rose-600 to-rose-800 hover:from-rose-600 hover:to-rose-700 active:from-rose-800 text-white font-extrabold py-4 px-4 rounded-xl shadow-lg shadow-rose-700/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2 border border-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-wider cursor-pointer"
+                className="w-full bg-gradient-to-r from-rose-700 via-rose-600 to-rose-800 hover:from-rose-600 hover:to-rose-700 active:from-rose-800 text-white font-extrabold py-3.5 sm:py-4 px-4 rounded-xl shadow-lg shadow-rose-700/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2 border border-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm uppercase tracking-wider cursor-pointer"
               >
                 {isGenerating ? (
                   <>
@@ -805,47 +803,47 @@ export default function App() {
           </div>
 
           {/* Real-Time Live Frame Preview Container */}
-          <div className="lg:col-span-7 bg-white border border-rose-100 rounded-2xl p-4 sm:p-6 shadow-xl sticky top-20">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xs font-extrabold uppercase tracking-widest text-rose-900 flex items-center gap-2">
-                <span>✨</span> Real-Time Live Frame Preview
+          <div className="lg:col-span-7 bg-white border border-rose-100 rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-xl lg:sticky lg:top-20">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-rose-900 flex items-center gap-1.5 sm:gap-2">
+                <span>✨</span> Real-Time Live Preview
               </h2>
-              <span className="text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-0.5 rounded-full font-mono">
-                1080 &times; 1080 px Exact Match
+              <span className="text-[9px] sm:text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 px-2 sm:px-2.5 py-0.5 rounded-full font-mono">
+                1080 &times; 1080 px
               </span>
             </div>
 
-            {/* Visual Frame Render */}
-            <div className="relative aspect-square w-full max-w-md mx-auto rounded-xl overflow-hidden bg-gradient-to-b from-[#59001b] via-[#8b0032] to-[#420013] shadow-2xl p-4 sm:p-5 flex flex-col justify-between select-none border border-rose-400/40">
+            {/* Responsive Visual Frame Render */}
+            <div className="relative aspect-square w-full max-w-xs sm:max-w-sm md:max-w-md mx-auto rounded-xl overflow-hidden bg-gradient-to-b from-[#59001b] via-[#8b0032] to-[#420013] shadow-2xl p-3 sm:p-4 md:p-5 flex flex-col justify-between select-none border border-rose-400/40">
               
               {/* Header Bar */}
               <div className="relative z-10 flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-white border-2 border-[#ffd700] flex items-center justify-center text-xs shadow-md shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white border-2 border-[#ffd700] flex items-center justify-center text-[10px] sm:text-xs shadow-md shrink-0">
                     🦅
                   </div>
                   <div>
-                    <p className="text-white font-black text-[11px] leading-none tracking-tight">{CHURCH_NAME}</p>
-                    <p className="text-amber-400 text-[9px] font-bold mt-0.5">{CHURCH_LOCATION}</p>
+                    <p className="text-white font-black text-[10px] sm:text-[11px] leading-none tracking-tight">{CHURCH_NAME}</p>
+                    <p className="text-amber-400 text-[8px] sm:text-[9px] font-bold mt-0.5">{CHURCH_LOCATION}</p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <p className="text-[#ffd700] font-extrabold text-[9px] tracking-wider">ANNUAL CONVENTION</p>
-                  <p className="text-white font-black text-xl leading-none my-0.5 tracking-tight">WOMEN</p>
-                  <p className="text-white font-extrabold text-[8px] tracking-widest">CONVENTION 2026</p>
+                  <p className="text-[#ffd700] font-extrabold text-[8px] sm:text-[9px] tracking-wider">ANNUAL CONVENTION</p>
+                  <p className="text-white font-black text-lg sm:text-xl leading-none my-0.5 tracking-tight">WOMEN</p>
+                  <p className="text-white font-extrabold text-[7px] sm:text-[8px] tracking-widest">CONVENTION 2026</p>
                 </div>
               </div>
 
               {/* Attendance Headline */}
               <div className="relative z-10 text-center my-1">
-                <p className="text-white font-black text-base sm:text-lg uppercase tracking-tight drop-shadow-md">
+                <p className="text-white font-black text-xs sm:text-sm md:text-base uppercase tracking-tight drop-shadow-md">
                   I WILL ATTEND!
                 </p>
               </div>
 
               {/* Locked Soft Rose & Cream Frame Card */}
-              <div className={`relative z-10 rounded-md p-2.5 shadow-2xl flex flex-col justify-between h-[70%] border ${CARD_THEME.cssClass}`} style={{ borderColor: CARD_THEME.borderColor }}>
+              <div className={`relative z-10 rounded-md p-2 sm:p-2.5 shadow-2xl flex flex-col justify-between h-[70%] border ${CARD_THEME.cssClass}`} style={{ borderColor: CARD_THEME.borderColor }}>
                 
                 {/* Photo Area */}
                 <div className="relative w-full h-[64%] rounded-sm overflow-hidden bg-slate-900 border border-rose-400">
@@ -859,8 +857,8 @@ export default function App() {
                     }}
                   />
                   {fullName.trim() && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-[#8b0032]/94 backdrop-blur-xs py-1 text-center border-t border-amber-400/40 z-10">
-                      <p className="text-white font-extrabold text-[11px] uppercase tracking-wider">
+                    <div className="absolute bottom-0 left-0 right-0 bg-[#8b0032]/94 backdrop-blur-xs py-0.5 sm:py-1 text-center border-t border-amber-400/40 z-10">
+                      <p className="text-white font-extrabold text-[10px] sm:text-[11px] uppercase tracking-wider truncate px-1">
                         {fullName}
                       </p>
                     </div>
@@ -868,38 +866,38 @@ export default function App() {
                 </div>
 
                 {/* Bottom Details Grid */}
-                <div className="pt-2 flex items-end justify-between">
-                  <div className="pr-2 min-w-0">
-                    <p className="font-black text-sm leading-tight uppercase" style={{ color: CARD_THEME.textColor }}>
+                <div className="pt-1.5 sm:pt-2 flex items-end justify-between">
+                  <div className="pr-1.5 sm:pr-2 min-w-0">
+                    <p className="font-black text-xs sm:text-sm leading-tight uppercase" style={{ color: CARD_THEME.textColor }}>
                       {EVENT_DATES}
                     </p>
                     
-                    <div className="mt-1 space-y-0.5">
-                      <p className="font-extrabold text-[9px]" style={{ color: CARD_THEME.dateColor }}>
+                    <div className="mt-0.5 sm:mt-1 space-y-0.5">
+                      <p className="font-extrabold text-[8px] sm:text-[9px]" style={{ color: CARD_THEME.dateColor }}>
                         {PROGRAM_1_TITLE}
                       </p>
-                      <p className="font-extrabold text-[9.5px]" style={{ color: CARD_THEME.textColor }}>
+                      <p className="font-extrabold text-[8.5px] sm:text-[9.5px]" style={{ color: CARD_THEME.textColor }}>
                         {PROGRAM_1_TIME}
                       </p>
                     </div>
 
-                    <div className="mt-1">
-                      <p className="font-extrabold text-[9px] flex items-center gap-1" style={{ color: CARD_THEME.textColor }}>
+                    <div className="mt-0.5 sm:mt-1">
+                      <p className="font-extrabold text-[8px] sm:text-[9px] flex items-center gap-1" style={{ color: CARD_THEME.textColor }}>
                         <span className="text-[#8b0032]">📍</span> {CHURCH_NAME}
                       </p>
-                      <p className="text-[8px] pl-3.5 font-medium truncate" style={{ color: CARD_THEME.dateColor }}>
+                      <p className="text-[7.5px] sm:text-[8px] pl-3 sm:pl-3.5 font-medium truncate" style={{ color: CARD_THEME.dateColor }}>
                         {CHURCH_LOCATION}
                       </p>
                     </div>
                   </div>
 
-                  <div className="shrink-0 w-24 text-center rounded-sm overflow-hidden shadow-xl border border-amber-500/20">
-                    <div className="bg-[#c2185b] text-white p-1">
-                      <p className="font-bold text-[9px] leading-tight tracking-wider">{TICKET_TAG_TOP}</p>
-                      <p className="font-black text-base leading-none">{TICKET_TAG_YEAR}</p>
+                  <div className="shrink-0 w-20 sm:w-24 text-center rounded-sm overflow-hidden shadow-xl border border-amber-500/20">
+                    <div className="bg-[#c2185b] text-white p-0.5 sm:p-1">
+                      <p className="font-bold text-[8px] sm:text-[9px] leading-tight tracking-wider">{TICKET_TAG_TOP}</p>
+                      <p className="font-black text-xs sm:text-base leading-none">{TICKET_TAG_YEAR}</p>
                     </div>
-                    <div className="bg-[#1e1e1e] text-white py-1">
-                      <p className="font-bold text-[8.5px] tracking-wider">{TICKET_CONFIRM}</p>
+                    <div className="bg-[#1e1e1e] text-white py-0.5 sm:py-1">
+                      <p className="font-bold text-[7.5px] sm:text-[8.5px] tracking-wider">{TICKET_CONFIRM}</p>
                     </div>
                   </div>
 
@@ -908,11 +906,11 @@ export default function App() {
               </div>
 
               {/* Bottom Footer */}
-              <div className="relative z-10 text-center mt-1">
-                <p className="text-amber-400 font-bold text-[9.5px]">
+              <div className="relative z-10 text-center mt-0.5 sm:mt-1">
+                <p className="text-amber-400 font-bold text-[8.5px] sm:text-[9.5px] truncate">
                   {FOOTER_POWERED}
                 </p>
-                <p className="text-white text-[8.5px]">
+                <p className="text-white text-[7.5px] sm:text-[8.5px] truncate">
                   {SOCIAL_HANDLE}
                 </p>
               </div>
@@ -926,7 +924,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-rose-200 py-4 text-center text-xs text-slate-500 bg-white">
+      <footer className="border-t border-rose-200 py-3.5 text-center text-[11px] sm:text-xs text-slate-500 bg-white">
         {CHURCH_NAME} &bull; {EVENT_TITLE} Photo Frame Generator
       </footer>
 
