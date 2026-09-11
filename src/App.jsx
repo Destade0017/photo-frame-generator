@@ -1,34 +1,70 @@
 import { useState, useRef } from 'react'
 
-function App() {
+export default function App() {
   const [photoUrl, setPhotoUrl] = useState(null)
   const [photoName, setPhotoName] = useState('')
   const [fullName, setFullName] = useState('')
-  const [additionalDetails, setAdditionalDetails] = useState('')
-  const [eventTag, setEventTag] = useState('OFFICIAL DELEGATE')
-  const [validationState, setValidationState] = useState(null) // { type: 'error' | 'success', text: string }
+  
+  // Locked Soft Rose & Cream Card Theme for everyone
+  const CARD_THEME = {
+    bgGradStart: '#fff1f2',
+    bgGradEnd: '#ffe4e6',
+    textColor: '#881337',
+    dateColor: '#9f1239',
+    borderColor: '#f43f5e',
+    cssClass: 'bg-gradient-to-b from-[#fff1f2] to-[#ffe4e6] text-[#881337]'
+  }
+
+  // Photo positioning & scaling state
+  const [fitMode, setFitMode] = useState('contain')
+  const [photoZoom, setPhotoZoom] = useState(100)
+  const [photoOffsetX, setPhotoOffsetX] = useState(0)
+  const [photoOffsetY, setPhotoOffsetY] = useState(0)
+
+  const [validationState, setValidationState] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
   
   const fileInputRef = useRef(null)
   const canvasRef = useRef(null)
 
-  // Handle Photo File Selection & Validation
+  // Default sample photo
+  const DEFAULT_SAMPLE_PHOTO = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=800&auto=format&fit=crop'
+  const activePhotoUrl = photoUrl || DEFAULT_SAMPLE_PHOTO
+
+  // Template Details for THE EAGLES ASSEMBLY - WOMEN CONVENTION 2026
+  const CHURCH_NAME = 'THE EAGLES ASSEMBLY'
+  const CHURCH_LOCATION = 'Osongoma, Uyo'
+  const EVENT_TITLE = 'WOMEN CONVENTION 2026'
+  const EVENT_DATES = '23RD - 27TH SEPT 2026'
+  
+  const PROGRAM_1_TITLE = 'WORD & PRAYER FESTIVAL'
+  const PROGRAM_1_TIME = 'WED - FRI 5PM DAILY'
+  const PROGRAM_2_TITLE = 'WOMEN TIMEOUT & VISITATION'
+  const PROGRAM_2_TIME = 'SATURDAY 7:00AM'
+  const PROGRAM_3_TITLE = 'THANKSGIVING CELEBRATION'
+  const PROGRAM_3_TIME = 'SUNDAY 8:00AM'
+
+  const TICKET_TAG_TOP = 'EAGLES'
+  const TICKET_TAG_YEAR = '2026'
+  const TICKET_CONFIRM = 'LIVE STREAM'
+  const FOOTER_POWERED = 'The Eagles Assembly, Osongoma, Uyo'
+  const SOCIAL_HANDLE = 'FB/YT: @Theeaglesassemblyuyo'
+
+  // Handle Photo Upload
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
     if (!validTypes.includes(file.type.toLowerCase())) {
       setValidationState({
         type: 'error',
-        text: 'Invalid file format. Please upload a JPG, JPEG, or PNG image.'
+        text: 'Invalid file format. Please upload a JPG, JPEG, PNG, or WebP image.'
       })
       if (e.target) e.target.value = ''
       return
     }
 
-    // Validate file size (max 25MB)
     if (file.size > 25 * 1024 * 1024) {
       setValidationState({
         type: 'error',
@@ -38,7 +74,6 @@ function App() {
       return
     }
 
-    // Clean up previous URL to prevent memory leaks
     if (photoUrl) {
       URL.revokeObjectURL(photoUrl)
     }
@@ -46,74 +81,173 @@ function App() {
     const url = URL.createObjectURL(file)
     setPhotoUrl(url)
     setPhotoName(file.name)
-    setValidationState(null)
+    
+    setFitMode('contain')
+    setPhotoZoom(100)
+    setPhotoOffsetX(0)
+    setPhotoOffsetY(0)
+
+    setValidationState({
+      type: 'success',
+      text: 'Photo uploaded! Auto-fit applied.'
+    })
   }
 
-  // Handle Photo Removal
   const handleRemovePhoto = () => {
     if (photoUrl) {
       URL.revokeObjectURL(photoUrl)
     }
     setPhotoUrl(null)
     setPhotoName('')
+    setFitMode('contain')
+    setPhotoZoom(100)
+    setPhotoOffsetX(0)
+    setPhotoOffsetY(0)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
     setValidationState(null)
   }
 
-  // Draw Photo with Object-Fit Cover Math on Canvas
-  const drawImageCover = (ctx, img, x, y, width, height, radius = 0) => {
-    const imgRatio = img.naturalWidth / img.naturalHeight
-    const targetRatio = width / height
-    let sWidth, sHeight, sx, sy
-
-    if (imgRatio > targetRatio) {
-      sHeight = img.naturalHeight
-      sWidth = sHeight * targetRatio
-      sx = (img.naturalWidth - sWidth) / 2
-      sy = 0
-    } else {
-      sWidth = img.naturalWidth
-      sHeight = sWidth / targetRatio
-      sx = 0
-      sy = (img.naturalHeight - sHeight) / 2
-    }
-
+  // Draw Photo on Canvas with Automatic Fit (Contain / Cover) & Offsets
+  const drawImageCover = (
+    ctx, 
+    img, 
+    x, 
+    y, 
+    width, 
+    height, 
+    radius = 0, 
+    mode = 'contain',
+    scalePercent = 100, 
+    offsetXPercent = 0, 
+    offsetYPercent = 0
+  ) => {
     ctx.save()
+    
     if (radius > 0) {
       ctx.beginPath()
       if (typeof ctx.roundRect === 'function') {
         ctx.roundRect(x, y, width, height, radius)
       } else {
-        // Fallback for roundRect
         ctx.rect(x, y, width, height)
       }
       ctx.clip()
     }
-    ctx.drawImage(img, sx, sy, sWidth, sHeight, x, y, width, height)
+
+    if (mode === 'contain') {
+      ctx.fillStyle = '#111827'
+      ctx.fillRect(x, y, width, height)
+    }
+
+    const imgRatio = img.naturalWidth / img.naturalHeight
+    const targetRatio = width / height
+    
+    let drawW, drawH, drawX, drawY
+
+    if (mode === 'contain') {
+      if (imgRatio > targetRatio) {
+        drawW = width
+        drawH = width / imgRatio
+      } else {
+        drawH = height
+        drawW = height * imgRatio
+      }
+      drawX = x + (width - drawW) / 2
+      drawY = y + (height - drawH) / 2
+    } else {
+      if (imgRatio > targetRatio) {
+        drawH = height
+        drawW = drawH * imgRatio
+      } else {
+        drawW = width
+        drawH = drawW / imgRatio
+      }
+      drawX = x + (width - drawW) / 2
+      drawY = y + (height - drawH) / 2
+    }
+
+    const scale = scalePercent / 100
+    const finalW = drawW * scale
+    const finalH = drawH * scale
+
+    const panX = (offsetXPercent / 100) * width
+    const panY = (offsetYPercent / 100) * height
+
+    const finalX = drawX + (drawW - finalW) / 2 + panX
+    const finalY = drawY + (drawH - finalH) / 2 + panY
+
+    ctx.drawImage(img, finalX, finalY, finalW, finalH)
     ctx.restore()
   }
 
-  // Truncate text for Canvas rendering if it exceeds maxWidth
-  const getTruncatedText = (ctx, text, maxWidth) => {
-    if (ctx.measureText(text).width <= maxWidth) return text
-    let truncated = text
-    while (truncated.length > 0 && ctx.measureText(truncated + '…').width > maxWidth) {
-      truncated = truncated.slice(0, -1)
+  const drawRoundRect = (ctx, x, y, w, h, r) => {
+    ctx.beginPath()
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(x, y, w, h, r)
+    } else {
+      ctx.rect(x, y, w, h)
     }
-    return truncated + '…'
   }
 
-  // Generate Frame Canvas & Trigger PNG Download
-  const generateAndDownloadFrame = async (e) => {
-    e.preventDefault()
+  // Eagle Crest Logo Drawing
+  const drawEagleCrest = (ctx, cx, cy, radius) => {
+    ctx.save()
+    
+    ctx.beginPath()
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2)
+    ctx.fillStyle = '#ffffff'
+    ctx.fill()
+    ctx.strokeStyle = '#ffd700'
+    ctx.lineWidth = 3
+    ctx.stroke()
 
-    // Form Validation Checks
+    ctx.beginPath()
+    ctx.arc(cx, cy, radius * 0.85, 0, Math.PI * 2)
+    ctx.fillStyle = '#8b0032'
+    ctx.fill()
+
+    ctx.fillStyle = '#ffd700'
+    ctx.beginPath()
+    ctx.moveTo(cx - 12, cy + 4)
+    ctx.lineTo(cx, cy - 14)
+    ctx.lineTo(cx + 12, cy + 4)
+    ctx.lineTo(cx + 5, cy + 2)
+    ctx.lineTo(cx, cy - 4)
+    ctx.lineTo(cx - 5, cy + 2)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.fillStyle = '#ffffff'
+    ctx.beginPath()
+    ctx.arc(cx, cy - 2, 4, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.restore()
+  }
+
+  const drawTicketShape = (ctx, x, y, w, h, notchR = 12) => {
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    ctx.lineTo(x + w, y)
+    ctx.lineTo(x + w, y + h / 2 - notchR)
+    ctx.arc(x + w, y + h / 2, notchR, -Math.PI / 2, Math.PI / 2, true)
+    ctx.lineTo(x + w, y + h)
+    ctx.lineTo(x, y + h)
+    ctx.lineTo(x, y + h / 2 + notchR)
+    ctx.arc(x, y + h / 2, notchR, Math.PI / 2, -Math.PI / 2, true)
+    ctx.lineTo(x, y)
+    ctx.closePath()
+  }
+
+  // Generate & Download Canvas Image (1080 x 1080 px Square Frame)
+  const generateAndDownloadFrame = async (e) => {
+    if (e) e.preventDefault()
+
     if (!photoUrl && !fullName.trim()) {
       setValidationState({
         type: 'error',
-        text: 'Please upload a photo and enter your Full Name to generate your frame.'
+        text: 'Please upload your photo and enter your name to download your frame.'
       })
       return
     }
@@ -121,15 +255,7 @@ function App() {
     if (!photoUrl) {
       setValidationState({
         type: 'error',
-        text: 'Please select a photo before generating your frame.'
-      })
-      return
-    }
-
-    if (!fullName.trim()) {
-      setValidationState({
-        type: 'error',
-        text: 'Please enter your Full Name before generating your frame.'
+        text: 'Please upload your photo before generating the frame.'
       })
       return
     }
@@ -138,192 +264,240 @@ function App() {
     setValidationState(null)
 
     try {
-      // 1. Create offscreen canvas with fixed 4:5 resolution (1080 x 1350 px)
-      const CANVAS_WIDTH = 1080
-      const CANVAS_HEIGHT = 1350
-      
+      const CANVAS_SIZE = 1080
       const canvas = canvasRef.current || document.createElement('canvas')
-      canvas.width = CANVAS_WIDTH
-      canvas.height = CANVAS_HEIGHT
+      canvas.width = CANVAS_SIZE
+      canvas.height = CANVAS_SIZE
       const ctx = canvas.getContext('2d')
 
-      // Load uploaded user photo
-      const userImg = new Image()
-      userImg.crossOrigin = 'anonymous'
-      
+      // Load active photo image
+      const photoImg = new Image()
+      photoImg.crossOrigin = 'anonymous'
+
       await new Promise((resolve, reject) => {
-        userImg.onload = resolve
-        userImg.onerror = () => reject(new Error('Failed to load uploaded image.'))
-        userImg.src = photoUrl
+        photoImg.onload = resolve
+        photoImg.onerror = () => reject(new Error('Failed to load image.'))
+        photoImg.src = activePhotoUrl
       })
 
-      // 2. Draw Frame Background (Deep Slate & Gradient Glow)
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT)
-      bgGradient.addColorStop(0, '#090d16')
-      bgGradient.addColorStop(0.5, '#0f172a')
-      bgGradient.addColorStop(1, '#05070c')
+      // 1. Rich Crimson Red Glow Gradient Background
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, CANVAS_SIZE)
+      bgGradient.addColorStop(0, '#59001b')
+      bgGradient.addColorStop(0.35, '#8b0032')
+      bgGradient.addColorStop(0.7, '#a8003b')
+      bgGradient.addColorStop(1, '#420013')
       ctx.fillStyle = bgGradient
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+      ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
-      // Background Ambient Radial Glow
       const radialGlow = ctx.createRadialGradient(
-        CANVAS_WIDTH / 2, 450, 50,
-        CANVAS_WIDTH / 2, 450, 600
+        CANVAS_SIZE / 2, 520, 60,
+        CANVAS_SIZE / 2, 520, 580
       )
-      radialGlow.addColorStop(0, 'rgba(99, 102, 241, 0.18)')
-      radialGlow.addColorStop(1, 'rgba(99, 102, 241, 0)')
+      radialGlow.addColorStop(0, 'rgba(255, 215, 0, 0.28)')
+      radialGlow.addColorStop(0.5, 'rgba(216, 27, 96, 0.35)')
+      radialGlow.addColorStop(1, 'rgba(50, 0, 15, 0)')
       ctx.fillStyle = radialGlow
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+      ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
-      // Decorative Outer Gold/Indigo Double Border Line
-      ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)'
-      ctx.lineWidth = 12
-      ctx.strokeRect(24, 24, CANVAS_WIDTH - 48, CANVAS_HEIGHT - 48)
+      // 2. Top Left Header (The Eagles Assembly Emblem & Text)
+      drawEagleCrest(ctx, 55, 58, 26)
 
-      ctx.strokeStyle = 'rgba(244, 63, 94, 0.3)'
-      ctx.lineWidth = 4
-      ctx.strokeRect(36, 36, CANVAS_WIDTH - 72, CANVAS_HEIGHT - 72)
+      ctx.textAlign = 'left'
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '900 21px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(CHURCH_NAME, 94, 52)
 
-      // Decorative Corner Brackets
-      const cornerSize = 40
-      ctx.strokeStyle = '#6366f1'
-      ctx.lineWidth = 6
-      
-      // Top-Left Corner
-      ctx.beginPath()
-      ctx.moveTo(48, 48 + cornerSize)
-      ctx.lineTo(48, 48)
-      ctx.lineTo(48 + cornerSize, 48)
-      ctx.stroke()
+      ctx.fillStyle = '#ffcc00'
+      ctx.font = 'bold 13px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(CHURCH_LOCATION, 94, 72)
 
-      // Top-Right Corner
-      ctx.beginPath()
-      ctx.moveTo(CANVAS_WIDTH - 48 - cornerSize, 48)
-      ctx.lineTo(CANVAS_WIDTH - 48, 48)
-      ctx.lineTo(CANVAS_WIDTH - 48, 48 + cornerSize)
-      ctx.stroke()
+      // 3. Top Right Header (WOMEN CONVENTION 2026)
+      ctx.textAlign = 'right'
+      ctx.fillStyle = '#ffd700'
+      ctx.font = 'bold 16px "Montserrat", system-ui, sans-serif'
+      ctx.fillText('ANNUAL CONVENTION', CANVAS_SIZE - 40, 44)
 
-      // Bottom-Left Corner
-      ctx.beginPath()
-      ctx.moveTo(48, CANVAS_HEIGHT - 48 - cornerSize)
-      ctx.lineTo(48, CANVAS_HEIGHT - 48)
-      ctx.lineTo(48 + cornerSize, CANVAS_HEIGHT - 48)
-      ctx.stroke()
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '900 58px "Montserrat", sans-serif'
+      ctx.fillText('WOMEN', CANVAS_SIZE - 40, 94)
 
-      // Bottom-Right Corner
-      ctx.beginPath()
-      ctx.moveTo(CANVAS_WIDTH - 48 - cornerSize, CANVAS_HEIGHT - 48)
-      ctx.lineTo(CANVAS_WIDTH - 48, CANVAS_HEIGHT - 48)
-      ctx.lineTo(CANVAS_WIDTH - 48, CANVAS_HEIGHT - 48 - cornerSize)
-      ctx.stroke()
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 15px "Montserrat", system-ui, sans-serif'
+      ctx.fillText('CONVENTION 2026', CANVAS_SIZE - 40, 116)
 
-      // 3. Top Header Event Banner
-      const headerBoxY = 70
-      const headerBoxHeight = 70
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)'
-      ctx.beginPath()
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(80, headerBoxY, CANVAS_WIDTH - 160, headerBoxHeight, 16)
-      } else {
-        ctx.rect(80, headerBoxY, CANVAS_WIDTH - 160, headerBoxHeight)
-      }
-      ctx.fill()
-      ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      ctx.fillStyle = '#a5b4fc'
-      ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+      // 4. Headline Text Above Frame
       ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(
-        (eventTag || 'OFFICIAL DELEGATE').toUpperCase(),
-        CANVAS_WIDTH / 2,
-        headerBoxY + headerBoxHeight / 2
-      )
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '900 36px "Montserrat", system-ui, sans-serif'
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.75)'
+      ctx.shadowBlur = 12
+      ctx.shadowOffsetY = 4
+      ctx.fillText('I WILL ATTEND!', CANVAS_SIZE / 2, 170)
+      ctx.shadowBlur = 0
+      ctx.shadowOffsetY = 0
 
-      // 4. Draw User Photo Area (Centered 860x860 px)
-      const photoX = 110
-      const photoY = 170
-      const photoW = CANVAS_WIDTH - 220
-      const photoH = 860
-      const photoRadius = 32
+      // 5. Locked Soft Rose & Cream Frame Card Container
+      const frameX = 75
+      const frameY = 192
+      const frameW = 930
+      const frameH = 785
+      const frameRadius = 12
 
-      // Draw Photo Cover
-      drawImageCover(ctx, userImg, photoX, photoY, photoW, photoH, photoRadius)
+      ctx.save()
+      ctx.shadowColor = 'rgba(30, 0, 10, 0.55)'
+      ctx.shadowBlur = 26
+      ctx.shadowOffsetY = 12
 
-      // Photo Frame Border
-      ctx.strokeStyle = '#4f46e5'
-      ctx.lineWidth = 8
-      ctx.beginPath()
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(photoX, photoY, photoW, photoH, photoRadius)
-      } else {
-        ctx.rect(photoX, photoY, photoW, photoH)
-      }
-      ctx.stroke()
+      // Soft Rose & Cream Gradient
+      const cardGrad = ctx.createLinearGradient(0, frameY, 0, frameY + frameH)
+      cardGrad.addColorStop(0, CARD_THEME.bgGradStart)
+      cardGrad.addColorStop(1, CARD_THEME.bgGradEnd)
+      ctx.fillStyle = cardGrad
 
-      // 5. Draw Bottom Overlay Card (Personalized Name & Details)
-      const footerY = 1060
-      const footerH = 210
-      const footerW = CANVAS_WIDTH - 160
-      const footerX = 80
-
-      // Card Gradient Fill
-      const footerGrad = ctx.createLinearGradient(0, footerY, 0, footerY + footerH)
-      footerGrad.addColorStop(0, 'rgba(15, 23, 42, 0.95)')
-      footerGrad.addColorStop(1, 'rgba(9, 13, 22, 0.98)')
-
-      ctx.fillStyle = footerGrad
-      ctx.beginPath()
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(footerX, footerY, footerW, footerH, 24)
-      } else {
-        ctx.rect(footerX, footerY, footerW, footerH)
-      }
+      drawRoundRect(ctx, frameX, frameY, frameW, frameH, frameRadius)
       ctx.fill()
 
-      // Card Border & Glow
-      ctx.strokeStyle = 'rgba(99, 102, 241, 0.4)'
+      // Rose Accent Border
+      ctx.strokeStyle = CARD_THEME.borderColor
       ctx.lineWidth = 3
       ctx.stroke()
+      ctx.restore()
 
-      // Render Full Name (Auto-scaled / Truncated for edge cases)
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'top'
+      // 6. User Photo Box inside Card
+      const photoX = frameX + 16
+      const photoY = frameY + 16
+      const photoBoxW = frameW - 32
+      const photoBoxH = 520
 
-      let nameFontSize = 46
-      ctx.font = `bold ${nameFontSize}px system-ui, -apple-system, sans-serif`
-      const maxTextWidth = footerW - 60
+      drawImageCover(
+        ctx, 
+        photoImg, 
+        photoX, 
+        photoY, 
+        photoBoxW, 
+        photoBoxH, 
+        6, 
+        fitMode, 
+        photoZoom, 
+        photoOffsetX, 
+        photoOffsetY
+      )
 
-      const safeName = getTruncatedText(ctx, fullName.trim(), maxTextWidth)
-      
-      ctx.fillStyle = '#ffffff'
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
-      ctx.shadowBlur = 8
-      ctx.fillText(safeName, CANVAS_WIDTH / 2, footerY + 36)
-      ctx.shadowBlur = 0 // Reset shadow
+      ctx.strokeStyle = '#f43f5e'
+      ctx.lineWidth = 2
+      drawRoundRect(ctx, photoX, photoY, photoBoxW, photoBoxH, 6)
+      ctx.stroke()
 
-      // Render Additional Details (Optional)
-      if (additionalDetails.trim()) {
-        ctx.font = '500 28px system-ui, -apple-system, sans-serif'
-        ctx.fillStyle = '#818cf8'
-        const safeDetails = getTruncatedText(ctx, additionalDetails.trim(), maxTextWidth)
-        ctx.fillText(safeDetails, CANVAS_WIDTH / 2, footerY + 96)
+      // Attendee Name Overlay Banner at bottom of photo
+      if (fullName.trim()) {
+        const ribbonH = 46
+        const ribbonY = photoY + photoBoxH - ribbonH
+        ctx.fillStyle = 'rgba(139, 0, 50, 0.94)'
+        ctx.fillRect(photoX, ribbonY, photoBoxW, ribbonH)
+
+        ctx.textAlign = 'center'
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 23px "Montserrat", system-ui, sans-serif'
+        ctx.fillText(fullName.trim().toUpperCase(), CANVAS_SIZE / 2, ribbonY + 31)
       }
 
-      // Small Badge Ribbon on Footer
-      ctx.font = 'bold 18px system-ui, -apple-system, sans-serif'
-      ctx.fillStyle = '#64748b'
-      const badgeY = additionalDetails.trim() ? footerY + 150 : footerY + 115
-      ctx.fillText('PROUDLY PARTICIPATING • 2026', CANVAS_WIDTH / 2, badgeY)
+      // 7. Bottom Schedule & Details Area
+      const contentY = frameY + photoBoxH + 26
+      const leftMargin = frameX + 28
 
-      // 6. Trigger Instant PNG File Download
+      ctx.textAlign = 'left'
+      ctx.fillStyle = CARD_THEME.textColor
+      ctx.font = '900 32px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(EVENT_DATES, leftMargin, contentY + 18)
+
+      ctx.fillStyle = CARD_THEME.dateColor
+      ctx.font = 'bold 13.5px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_1_TITLE, leftMargin, contentY + 50)
+
+      ctx.fillStyle = CARD_THEME.textColor
+      ctx.font = 'bold 17px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_1_TIME, leftMargin, contentY + 70)
+
+      const col2X = leftMargin + 320
+
+      ctx.fillStyle = CARD_THEME.dateColor
+      ctx.font = 'bold 13.5px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_2_TITLE, col2X, contentY + 50)
+
+      ctx.fillStyle = CARD_THEME.textColor
+      ctx.font = 'bold 17px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_2_TIME, col2X, contentY + 70)
+
+      const dateY = contentY + 115
+      ctx.fillStyle = '#8b0032'
+      drawRoundRect(ctx, leftMargin, dateY - 14, 22, 22, 4)
+      ctx.fill()
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 11px system-ui'
+      ctx.fillText('📍', leftMargin + 3, dateY + 2)
+
+      ctx.fillStyle = CARD_THEME.textColor
+      ctx.font = 'bold 16px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(CHURCH_NAME, leftMargin + 32, dateY - 1)
+
+      ctx.fillStyle = CARD_THEME.dateColor
+      ctx.font = 'bold 13.5px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(CHURCH_LOCATION, leftMargin + 32, dateY + 17)
+
+      ctx.fillStyle = CARD_THEME.dateColor
+      ctx.font = 'bold 13.5px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_3_TITLE, col2X, dateY - 2)
+
+      ctx.fillStyle = CARD_THEME.textColor
+      ctx.font = 'bold 17px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(PROGRAM_3_TIME, col2X, dateY + 17)
+
+      // 8. Right Overlapping Ticket Badge
+      const badgeW = 220
+      const badgeX = frameX + frameW - badgeW - 20
+      const badgeY = frameY + photoBoxH + 40
+
+      const topTicketH = 95
+      ctx.fillStyle = '#c2185b'
+      drawTicketShape(ctx, badgeX, badgeY, badgeW, topTicketH, 12)
+      ctx.fill()
+
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 24px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(TICKET_TAG_TOP, badgeX + badgeW / 2, badgeY + 38)
+
+      ctx.font = '900 38px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(TICKET_TAG_YEAR, badgeX + badgeW / 2, badgeY + 76)
+
+      const confirmY = badgeY + topTicketH
+      const confirmH = 46
+      ctx.fillStyle = '#1e1e1e'
+      ctx.fillRect(badgeX, confirmY, badgeW, confirmH)
+
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 16px "Montserrat", sans-serif'
+      ctx.fillText(TICKET_CONFIRM, badgeX + badgeW / 2, confirmY + 29)
+
+      // 9. Bottom Footer
+      const footerY = frameY + frameH + 34
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#ffcc00'
+      ctx.font = 'bold 14px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(FOOTER_POWERED, CANVAS_SIZE / 2, footerY)
+
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '500 13px "Montserrat", system-ui, sans-serif'
+      ctx.fillText(SOCIAL_HANDLE, CANVAS_SIZE / 2, footerY + 22)
+
+      // 10. Download
       const dataUrl = canvas.toDataURL('image/png', 1.0)
       const downloadLink = document.createElement('a')
       
-      const cleanFileName = fullName.trim().toLowerCase().replace(/[^a-z0-9]/g, '-') || 'event'
-      downloadLink.download = `${cleanFileName}-photo-frame.png`
+      const fileSlug = (fullName || 'eagles-women-convention-2026')
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+      downloadLink.download = `eagles-${fileSlug}-frame.png`
       downloadLink.href = dataUrl
       document.body.appendChild(downloadLink)
       downloadLink.click()
@@ -331,13 +505,13 @@ function App() {
 
       setValidationState({
         type: 'success',
-        text: '🎉 Frame generated successfully! Your PNG download has started.'
+        text: '🎉 High-resolution souvenir photo frame downloaded successfully!'
       })
     } catch (err) {
-      console.error('Canvas generation error:', err)
+      console.error('Frame generation failed:', err)
       setValidationState({
         type: 'error',
-        text: 'An error occurred while generating the frame. Please try again with a different photo.'
+        text: 'Failed to generate photo frame. Please try again.'
       })
     } finally {
       setIsGenerating(false)
@@ -345,68 +519,78 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Hidden Offscreen Canvas for Image Export */}
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50/60 to-red-50/40 text-slate-900 flex flex-col font-sans selection:bg-rose-600 selection:text-white">
+      {/* Hidden Offscreen Canvas for Export */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Navigation Header */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-3.5 flex justify-between items-center">
-          <div className="flex items-center space-x-2.5">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20 text-base">
-              🖼️
+      {/* Navigation Bar */}
+      <header className="border-b border-rose-200 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-xs">
+        <div className="max-w-5xl mx-auto px-4 py-3.5 flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-rose-700 to-amber-500 flex items-center justify-center font-bold text-white shadow-md shadow-rose-500/20 text-lg border border-amber-400/40">
+              🦅
             </div>
             <div>
-              <span className="font-bold text-lg tracking-tight text-white block leading-none">
-                Frame Studio
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-rose-950 block leading-tight">
+                {CHURCH_NAME}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">Event Photo Frame Creator</span>
+              <span className="text-xs text-rose-700 font-semibold">{EVENT_TITLE} Frame Generator</span>
             </div>
           </div>
-          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-            4:5 Souvenir Frame
+          <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200 hidden sm:inline-block">
+            {EVENT_DATES}
           </span>
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-6 md:py-10">
-        {/* Intro Header */}
-        <div className="text-center max-w-xl mx-auto mb-8">
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight mb-2 text-white">
-            Personalized Event Frame
+      {/* Main Workspace */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6 md:py-10">
+        
+        {/* Title Header */}
+        <div className="text-center max-w-2xl mx-auto mb-8">
+          <span className="text-xs font-bold uppercase tracking-widest text-rose-800 bg-rose-100 px-3.5 py-1.5 rounded-full border border-rose-200 mb-3 inline-block shadow-2xs">
+            {CHURCH_NAME} &bull; {CHURCH_LOCATION}
+          </span>
+          <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-rose-950 mt-1 mb-2">
+            {EVENT_TITLE}
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">
-            Upload your portrait, enter your details, and download a high-resolution 4:5 souvenir photo frame ready to share!
+          <p className="text-slate-600 text-xs sm:text-sm font-medium">
+            Upload your picture, enter your name, and download your official 1:1 souvenir photo frame!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Form Controls Column */}
-          <div className="md:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-5">
+          {/* Form Controls */}
+          <div className="lg:col-span-5 bg-white border border-rose-100 rounded-2xl p-6 shadow-xl space-y-6">
             
-            <form onSubmit={generateAndDownloadFrame} className="space-y-5">
-              {/* Photo Upload Section */}
+            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+              <h2 className="text-base font-extrabold text-rose-950 flex items-center gap-2">
+                <span>📷</span> Photo & Name Details
+              </h2>
+            </div>
+
+            <form onSubmit={generateAndDownloadFrame} className="space-y-6">
+              
+              {/* Option 1: Upload Picture */}
               <div>
-                <label className="block text-sm font-semibold text-white mb-1">
-                  1. Select Photo <span className="text-indigo-400">*</span>
+                <label className="block text-sm font-bold text-slate-900 mb-1.5">
+                  1. Upload Picture <span className="text-rose-600">*</span>
                 </label>
-                <p className="text-xs text-slate-400 mb-3">Upload a clear photo (JPG, JPEG, PNG)</p>
 
                 {!photoUrl ? (
                   <label 
                     htmlFor="photo-upload-input"
-                    className="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 hover:border-indigo-500 bg-slate-950/60 hover:bg-slate-950 rounded-xl p-6 sm:p-8 cursor-pointer transition group text-center"
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-rose-300 hover:border-rose-500 bg-rose-50/40 hover:bg-rose-50/80 rounded-xl p-6 cursor-pointer transition group text-center"
                   >
-                    <div className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl mb-3 text-indigo-400 group-hover:scale-110 transition">
-                      📷
+                    <div className="w-14 h-14 rounded-full bg-rose-100 border border-rose-200 flex items-center justify-center text-3xl mb-3 text-rose-600 group-hover:scale-110 transition">
+                      📸
                     </div>
-                    <span className="text-sm font-medium text-slate-200 group-hover:text-white">
-                      Tap to choose photo
+                    <span className="text-sm font-bold text-rose-950">
+                      Click to choose picture
                     </span>
                     <span className="text-xs text-slate-500 mt-1">
-                      Supports JPG, JPEG, PNG (Max 25MB)
+                      Supports JPG, JPEG, PNG, WebP (Max 25MB)
                     </span>
                     <input 
                       ref={fileInputRef}
@@ -418,27 +602,31 @@ function App() {
                     />
                   </label>
                 ) : (
-                  <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+                  <div className="bg-slate-50 border border-rose-200 rounded-xl p-3.5 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-indigo-500/40 shrink-0 bg-slate-900">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-rose-600 shrink-0 bg-slate-900 shadow-md">
                         <img 
                           src={photoUrl} 
-                          alt="Uploaded preview" 
-                          className="w-full h-full object-cover"
+                          alt="Uploaded picture" 
+                          className="w-full h-full"
+                          style={{ 
+                            objectFit: fitMode,
+                            transform: `scale(${photoZoom / 100}) translate(${photoOffsetX}%, ${photoOffsetY}%)` 
+                          }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-white truncate">{photoName || 'Uploaded Photo'}</p>
-                        <p className="text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5">
-                          <span>✓</span> Photo loaded successfully
+                        <p className="text-xs font-bold text-slate-900 truncate">{photoName || 'Uploaded Picture'}</p>
+                        <p className="text-[11px] text-emerald-600 flex items-center gap-1 mt-1 font-bold">
+                          <span>✓</span> Photo ready
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 border-t border-slate-900 pt-3">
+                    <div className="flex items-center gap-2 border-t border-slate-200 pt-2.5">
                       <label 
                         htmlFor="photo-replace-input"
-                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium py-2 px-3 rounded-lg cursor-pointer transition text-center"
+                        className="flex-1 bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 text-xs font-semibold py-2 px-3 rounded-lg cursor-pointer transition text-center shadow-2xs"
                       >
                         Change Photo
                         <input 
@@ -452,7 +640,7 @@ function App() {
                       <button
                         type="button"
                         onClick={handleRemovePhoto}
-                        className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 text-xs font-medium py-2 px-3 rounded-lg transition"
+                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold py-2 px-3 rounded-lg transition"
                       >
                         Remove
                       </button>
@@ -461,168 +649,287 @@ function App() {
                 )}
               </div>
 
-              {/* Full Name Field */}
-              <div className="border-t border-slate-800 pt-4">
-                <label htmlFor="full-name-input" className="block text-sm font-semibold text-white mb-1">
-                  2. Full Name <span className="text-indigo-400">*</span>
+              {/* Photo Alignment & Fit Mode */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <span className="text-xs font-bold text-rose-950 flex items-center gap-1.5">
+                    <span>🎯</span> Photo Alignment & Fit Mode
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFitMode('contain')
+                      setPhotoZoom(100)
+                      setPhotoOffsetX(0)
+                      setPhotoOffsetY(0)
+                    }}
+                    className="text-[10px] text-rose-700 hover:text-rose-900 underline font-bold"
+                  >
+                    Reset Fit
+                  </button>
+                </div>
+
+                {/* Fit Mode Selector */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                    Frame Fit Mode
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFitMode('contain')}
+                      className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                        fitMode === 'contain'
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      Show Full Image (Auto Fit)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFitMode('cover')}
+                      className={`py-2 px-3 text-xs font-bold rounded-lg border transition ${
+                        fitMode === 'cover'
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      Fill Entire Frame (Crop)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Zoom Scale */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-1">
+                    <span>Zoom Scale</span>
+                    <span className="text-rose-700 font-mono">{photoZoom}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="30"
+                    max="150"
+                    value={photoZoom}
+                    onChange={(e) => setPhotoZoom(Number(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                  />
+                </div>
+
+                {/* Move Left / Right */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-1">
+                    <span>Move Left / Right</span>
+                    <span className="text-rose-700 font-mono">
+                      {photoOffsetX > 0 ? `+${photoOffsetX}%` : `${photoOffsetX}%`}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-50"
+                    max="50"
+                    value={photoOffsetX}
+                    onChange={(e) => setPhotoOffsetX(Number(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                  />
+                </div>
+
+                {/* Move Up / Down */}
+                <div>
+                  <div className="flex justify-between text-[11px] font-semibold text-slate-700 mb-1">
+                    <span>Move Up / Down</span>
+                    <span className="text-rose-700 font-mono">
+                      {photoOffsetY > 0 ? `+${photoOffsetY}%` : `${photoOffsetY}%`}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-50"
+                    max="50"
+                    value={photoOffsetY}
+                    onChange={(e) => setPhotoOffsetY(Number(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-rose-600"
+                  />
+                </div>
+
+              </div>
+
+              {/* Option 2: Input Name */}
+              <div>
+                <label htmlFor="full-name-input" className="block text-sm font-bold text-slate-900 mb-1.5">
+                  2. Input Your Name
                 </label>
                 <input
                   id="full-name-input"
                   type="text"
-                  placeholder="e.g. Alex Morgan"
+                  placeholder="e.g. Sister Mercy Akpan"
                   value={fullName}
-                  onChange={(e) => {
-                    setFullName(e.target.value)
-                    setValidationState(null)
-                  }}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-rose-600 focus:bg-white focus:ring-2 focus:ring-rose-600/20 transition font-medium"
                 />
               </div>
 
-              {/* Additional Details Field (Optional) */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="additional-details-input" className="block text-sm font-semibold text-white">
-                    3. Additional Details
-                  </label>
-                  <span className="text-[11px] text-slate-500 uppercase font-medium">Optional</span>
-                </div>
-                <input
-                  id="additional-details-input"
-                  type="text"
-                  placeholder="e.g. IT Department, Class of 2026"
-                  value={additionalDetails}
-                  onChange={(e) => setAdditionalDetails(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                />
-              </div>
-
-              {/* Event Tag/Badge Field (Optional) */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label htmlFor="event-tag-input" className="block text-sm font-semibold text-white">
-                    4. Frame Badge Text
-                  </label>
-                  <span className="text-[11px] text-slate-500 uppercase font-medium">Badge Tag</span>
-                </div>
-                <input
-                  id="event-tag-input"
-                  type="text"
-                  placeholder="e.g. OFFICIAL DELEGATE"
-                  value={eventTag}
-                  onChange={(e) => setEventTag(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                />
-              </div>
-
-              {/* Validation Feedback Banner */}
+              {/* Validation Status Banner */}
               {validationState && (
                 <div 
-                  className={`p-3.5 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 ${
+                  className={`p-3.5 rounded-xl border text-xs flex items-start gap-2 ${
                     validationState.type === 'error'
-                      ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-                      : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      ? 'bg-rose-50 border-rose-200 text-rose-800'
+                      : 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   }`}
                 >
-                  <span className="text-base leading-none">
-                    {validationState.type === 'error' ? '⚠️' : '🎉'}
-                  </span>
+                  <span>{validationState.type === 'error' ? '⚠️' : '🎉'}</span>
                   <span>{validationState.text}</span>
                 </div>
               )}
 
-              {/* Generate & Download Button */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={isGenerating}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 active:from-indigo-700 active:to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition transform active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isGenerating ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Generating Frame...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>⬇️ Download Frame (PNG)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              {/* Download Frame Button */}
+              <button
+                type="submit"
+                disabled={isGenerating}
+                className="w-full bg-gradient-to-r from-rose-700 via-rose-600 to-rose-800 hover:from-rose-600 hover:to-rose-700 active:from-rose-800 text-white font-extrabold py-4 px-4 rounded-xl shadow-lg shadow-rose-700/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2 border border-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-wider cursor-pointer"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Generating Frame...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>⬇️ Download Photo Frame (PNG)</span>
+                  </>
+                )}
+              </button>
 
+            </form>
           </div>
 
-          {/* Frame Live Preview Card (4:5 Ratio Visual Preview) */}
-          <div className="md:col-span-6 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
-              <span>Live Frame Preview</span>
-              <span className="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">
-                4:5 Ratio
+          {/* Real-Time Live Frame Preview Container */}
+          <div className="lg:col-span-7 bg-white border border-rose-100 rounded-2xl p-4 sm:p-6 shadow-xl sticky top-20">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-extrabold uppercase tracking-widest text-rose-900 flex items-center gap-2">
+                <span>✨</span> Real-Time Live Frame Preview
+              </h2>
+              <span className="text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-0.5 rounded-full font-mono">
+                1080 &times; 1080 px Exact Match
               </span>
-            </h2>
+            </div>
 
-            {/* Styled 4:5 Aspect Ratio Frame Preview */}
-            <div className="relative aspect-[4/5] w-full max-w-sm mx-auto rounded-2xl overflow-hidden border-2 border-indigo-500/40 bg-slate-950 shadow-2xl flex flex-col justify-between p-4 sm:p-5 text-center select-none">
+            {/* Visual Frame Render */}
+            <div className="relative aspect-square w-full max-w-md mx-auto rounded-xl overflow-hidden bg-gradient-to-b from-[#59001b] via-[#8b0032] to-[#420013] shadow-2xl p-4 sm:p-5 flex flex-col justify-between select-none border border-rose-400/40">
               
-              {/* Outer Decorative Border Lines */}
-              <div className="absolute inset-2 border border-indigo-500/20 rounded-xl pointer-events-none z-10" />
-              <div className="absolute inset-3 border border-rose-500/15 rounded-lg pointer-events-none z-10" />
-
-              {/* Photo Area (Centered 1:1 or Cover Fit) */}
-              <div className="absolute inset-0 z-0 bg-slate-950 flex items-center justify-center">
-                {photoUrl ? (
-                  <img 
-                    src={photoUrl} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-center p-6">
-                    <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-3xl mx-auto mb-3 opacity-60">
-                      🖼️
-                    </div>
-                    <p className="text-slate-400 text-xs font-medium">No photo selected</p>
-                    <p className="text-slate-600 text-[11px] mt-1">Upload a photo to view preview</p>
+              {/* Header Bar */}
+              <div className="relative z-10 flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-white border-2 border-[#ffd700] flex items-center justify-center text-xs shadow-md shrink-0">
+                    🦅
                   </div>
-                )}
+                  <div>
+                    <p className="text-white font-black text-[11px] leading-none tracking-tight">{CHURCH_NAME}</p>
+                    <p className="text-amber-400 text-[9px] font-bold mt-0.5">{CHURCH_LOCATION}</p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[#ffd700] font-extrabold text-[9px] tracking-wider">ANNUAL CONVENTION</p>
+                  <p className="text-white font-black text-xl leading-none my-0.5 tracking-tight">WOMEN</p>
+                  <p className="text-white font-extrabold text-[8px] tracking-widest">CONVENTION 2026</p>
+                </div>
               </div>
 
-              {/* Top Header Badge */}
-              <div className="relative z-20 self-center bg-slate-900/90 backdrop-blur-md px-4 py-1.5 rounded-xl border border-indigo-500/30 shadow-lg mt-2">
-                <span className="text-[11px] font-bold tracking-widest uppercase text-indigo-300">
-                  {eventTag.trim() || 'OFFICIAL DELEGATE'}
-                </span>
-              </div>
-
-              {/* Bottom Details Overlay Panel */}
-              <div className="relative z-20 bg-slate-950/90 backdrop-blur-md p-3.5 rounded-xl border border-indigo-500/30 text-center shadow-xl mb-1">
-                <p className="text-base sm:text-lg font-extrabold text-white truncate drop-shadow-sm">
-                  {fullName.trim() || 'Your Name'}
+              {/* Attendance Headline */}
+              <div className="relative z-10 text-center my-1">
+                <p className="text-white font-black text-base sm:text-lg uppercase tracking-tight drop-shadow-md">
+                  I WILL ATTEND!
                 </p>
-                {additionalDetails.trim() && (
-                  <p className="text-xs font-semibold text-indigo-300 truncate mt-0.5">
-                    {additionalDetails.trim()}
-                  </p>
-                )}
-                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mt-1.5">
-                  PROUDLY PARTICIPATING &bull; 2026
+              </div>
+
+              {/* Locked Soft Rose & Cream Frame Card */}
+              <div className={`relative z-10 rounded-md p-2.5 shadow-2xl flex flex-col justify-between h-[70%] border ${CARD_THEME.cssClass}`} style={{ borderColor: CARD_THEME.borderColor }}>
+                
+                {/* Photo Area */}
+                <div className="relative w-full h-[64%] rounded-sm overflow-hidden bg-slate-900 border border-rose-400">
+                  <img 
+                    src={activePhotoUrl} 
+                    alt="Attendee Portrait" 
+                    className="w-full h-full transition-all duration-150"
+                    style={{ 
+                      objectFit: fitMode,
+                      transform: `scale(${photoZoom / 100}) translate(${photoOffsetX}%, ${photoOffsetY}%)`
+                    }}
+                  />
+                  {fullName.trim() && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-[#8b0032]/94 backdrop-blur-xs py-1 text-center border-t border-amber-400/40 z-10">
+                      <p className="text-white font-extrabold text-[11px] uppercase tracking-wider">
+                        {fullName}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Details Grid */}
+                <div className="pt-2 flex items-end justify-between">
+                  <div className="pr-2 min-w-0">
+                    <p className="font-black text-sm leading-tight uppercase" style={{ color: CARD_THEME.textColor }}>
+                      {EVENT_DATES}
+                    </p>
+                    
+                    <div className="mt-1 space-y-0.5">
+                      <p className="font-extrabold text-[9px]" style={{ color: CARD_THEME.dateColor }}>
+                        {PROGRAM_1_TITLE}
+                      </p>
+                      <p className="font-extrabold text-[9.5px]" style={{ color: CARD_THEME.textColor }}>
+                        {PROGRAM_1_TIME}
+                      </p>
+                    </div>
+
+                    <div className="mt-1">
+                      <p className="font-extrabold text-[9px] flex items-center gap-1" style={{ color: CARD_THEME.textColor }}>
+                        <span className="text-[#8b0032]">📍</span> {CHURCH_NAME}
+                      </p>
+                      <p className="text-[8px] pl-3.5 font-medium truncate" style={{ color: CARD_THEME.dateColor }}>
+                        {CHURCH_LOCATION}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 w-24 text-center rounded-sm overflow-hidden shadow-xl border border-amber-500/20">
+                    <div className="bg-[#c2185b] text-white p-1">
+                      <p className="font-bold text-[9px] leading-tight tracking-wider">{TICKET_TAG_TOP}</p>
+                      <p className="font-black text-base leading-none">{TICKET_TAG_YEAR}</p>
+                    </div>
+                    <div className="bg-[#1e1e1e] text-white py-1">
+                      <p className="font-bold text-[8.5px] tracking-wider">{TICKET_CONFIRM}</p>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Bottom Footer */}
+              <div className="relative z-10 text-center mt-1">
+                <p className="text-amber-400 font-bold text-[9.5px]">
+                  {FOOTER_POWERED}
+                </p>
+                <p className="text-white text-[8.5px]">
+                  {SOCIAL_HANDLE}
                 </p>
               </div>
 
             </div>
+
           </div>
 
         </div>
+
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-4 text-center text-xs text-slate-500">
-        Frame Studio &bull; Event Souvenir Photo Frame Generator
+      <footer className="border-t border-rose-200 py-4 text-center text-xs text-slate-500 bg-white">
+        {CHURCH_NAME} &bull; {EVENT_TITLE} Photo Frame Generator
       </footer>
+
     </div>
   )
 }
-
-export default App
